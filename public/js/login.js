@@ -8,6 +8,8 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
     const password = document.getElementById("password").value.trim();
     const responseMessage = document.getElementById("response-message");
 
+    
+
     // Basic input validation
     if (!email || !password) {
         responseMessage.innerText = "Please enter both email and password.";
@@ -30,3 +32,7 @@ document.getElementById("login-form").addEventListener("submit", async (e) => {
         responseMessage.style.color = "red";
     }
 });
+
+function redirectToForgotPassword() {
+    window.location.href = "forgot-password.html";
+}

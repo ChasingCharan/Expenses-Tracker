@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (user.isPremium) {
             premiumSection.style.display = "block";
+            listOfUserLeaderDashbord();
         }else {
             premiumSection.style.display = "none";
         }
@@ -163,9 +164,16 @@ const cashfree = Cashfree({
 
 async function pay() {
     try{
-        const res = axios.post("http://localhost:3000/api/payments/pay");
+        const res = await axios.post("http://localhost:3000/api/payments/pay",
+            { },
+            {
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+            }        
+        );
 
-        const paymentSessionId = res.paymentSessionId;
+        console.log("Payment initiated successfully:", res.data);
+
+        const paymentSessionId = res.data.paymentSessionId;
 
         let checkOutOptions = {
             paymentSessionId: paymentSessionId,

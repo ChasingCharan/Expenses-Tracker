@@ -23,6 +23,7 @@ body {
 form {
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
 label {
@@ -30,6 +31,7 @@ label {
     margin-top: 10px;
     font-weight: bold;
 }
+
 
 input {
     padding: 10px;
@@ -50,11 +52,13 @@ button {
     cursor: pointer;
     font-size: 16px;
     margin-top: 15px;
+    width: 100%;
 }
 
 button:hover {
     background-color: #218838;
 }
+
 
 /* Links */
 p {
