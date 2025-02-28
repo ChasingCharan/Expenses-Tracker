@@ -77,10 +77,8 @@ exports.getPaymentStatus = async (req, res) => {
             console.log(user.isPremium);
             user.isPremium = true;
             await user.save();
-            return res.redirect("/dashboard");
-        }else{
-            res.status(400).json({ message: "Payment failed" });
         }
+        return res.redirect("/dashboard");
         
     
     }catch (error) {
