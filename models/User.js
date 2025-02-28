@@ -27,6 +27,10 @@ const User = sequelize.define('User', {
     totalExpenses: {
         type: DataTypes.FLOAT,
         defaultValue: 0
+    },
+    isPremium:{
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
     }
 
 }

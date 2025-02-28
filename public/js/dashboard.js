@@ -6,9 +6,9 @@ const viewUsersBtn = document.getElementById("leaderDashbordBtn");
 const viewUsersList = document.getElementById("leaderDashbordList");
 const premiumSection = document.querySelector(".premium");
 
-const user = {
-    isPremium: true // Change to false to test hiding the button
-};
+// const user = {
+//     isPremium: true // Change to false to test hiding the button
+// };
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
@@ -29,7 +29,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (user.isPremium) {
+        console.log(response.data.isPremium);
+
+        if (response.data.isPremium) {
             premiumSection.style.display = "block";
             listOfUserLeaderDashbord();
         }else {
@@ -162,16 +164,38 @@ const cashfree = Cashfree({
     mode:"sandbox",
 });
 
+// check the user is premium or not api call
+
+async function checkPremium() {
+    try {
+        const res = await axios.get("http://localhost:3000/api/premium/check", {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        });
+
+        return res.data.isPremium;
+    } catch (error) {
+        console.error("Error checking premium status:", error);
+    }
+}
+
+
+
 async function pay() {
     try{
+
+        if(await checkPremium()) {
+            alert("You are already a premium user!");
+            return;
+        }
+
         const res = await axios.post("http://localhost:3000/api/payments/pay",
-            { },
+            {},
             {
                 headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
             }        
         );
 
-        console.log("Payment initiated successfully:", res.data);
+        console.log("Payment initiated successfully:", res);
 
         const paymentSessionId = res.data.paymentSessionId;
 

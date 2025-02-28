@@ -4,8 +4,7 @@ const User = require("./User");
 
 const Payment = sequelize.define("Payment", {
     orderId: {
-        type: DataTypes.INTEGER,
-        autoIncrement: true,
+        type: DataTypes.STRING(36),
         primaryKey: true
     },
     orderAmount: {

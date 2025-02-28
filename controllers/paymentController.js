@@ -1,80 +1,87 @@
-const { or } = require("sequelize");
-const Cashfree = require("../config/cashfreeConfig");
+const {
+    createOrder,
+    getPaymentStatus,
+  } = require("../Services/cashfreeService");
+
+const { v4: uuidv4 } = require("uuid");
+
+// const Cashfree = require("../config/cashfreeConfig");
 const Payment = require("../models/paymentModel");
 const User = require("../models/User");
-// Create an order with Cashfree and associate it with a User
-exports.createOrder = async (req, res) => {
+
+exports.processPayment = async (req, res) => {
+
+    const user =await User.findByPk(req.user.id);
+
+    const orderId = uuidv4();
+    const orderAmount = 2000;
+    const orderCurrency = "INR";
+    const customerID = req.user.id;
+    const customerPhone = `+91${user.phoneNumber}`;
 
     try {
-        
-        // Check if user exists
-        const user = await User.findByPk( req.user.id);
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
+
+
+        const paymentSessionId = await createOrder(
+            orderId,
+            orderAmount,
+            orderCurrency,
+            customerID,
+            customerPhone,
+          );
+
+
+        if(!paymentSessionId){
+            console.log("Failed to receive a valid payment session ID");
+            return res.status(500).json({ error: "Failed to receive a valid payment session ID" });
         }
+        
 
         // Save order details in DB
         const payment = await Payment.create({
-            orderAmount:2000,
-            orderCurrency: "INR",
-            customerID: user.id, // Associate payment with user
-            paymentStatus: "PENDING",
+            orderId,
+            paymentSessionId,
+            orderAmount,
+            orderCurrency,
+            customerID,
+            paymentStatus: "Pending",
         });
 
-        // Generate order expiry time (1 hour from now)
-        const expiryDate = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+        res.json({ paymentSessionId, orderId });
 
-        console.log(payment.orderId);
-
-        const request = {
-            order_amount: 2000,
-            order_currency: "INR",
-            order_id: payment.orderId,
-            customer_details: {
-                customer_id: user.id,
-                customer_phone: user.phoneNumber,
-            },
-            order_meta: {
-                return_url: `http://localhost:3000//api/payments/payment-status/${order_id}`,
-                payment_modes: "cc,dc,nb,upi,emi,wallet",
-            },
-            order_expiry_time: expiryDate,
-        };
-
-        console.log("Creating Order:", request);
-        const response = await Cashfree.PGCreateOrder("2023-08-01", request);
-
-        res.json({ paymentSessionId: response.data.payment_session_id });
     } catch (error) {
         console.error("Error creating order:", error.message);
         res.status(500).json({ error: "Payment initiation failed" });
     }
+
 };
+
 
 // Get payment status for a given order
 exports.getPaymentStatus = async (req, res) => {
+    const  paymentSessionId = req.params.paymentSessionId;
     try {
         
-        const response = await Cashfree.PGGetOrderDetails("2023-08-01",order_id);
+        const orderStatus = await getPaymentStatus(paymentSessionId);
 
-        let getOrderResponse = response.data;
-        let orderStatus;
+        const order = await Payment.findOne({ paymentSessionId });
 
-        if(getOrderResponse.filter(
-            (transaction) => transaction.payment_status === "SUCCESS"
-        ).length > 0){
-            orderStatus = "SUCCESS";
-        }
-        else if(getOrderResponse.filter(
-            (transaction) => transaction.payment_status === "PENDING"
-        ).length > 0){
-            orderStatus = "PENDING";
-        }
-        else{
-            orderStatus = "FAILED";
-        }
+        order.paymentStatus = orderStatus;
+        await order.save();
 
-        return orderStatus;
+        console.log(orderStatus);
+        // make user premium if payment is successful
+        if(orderStatus === "SUCCESS"){
+            const user = await User.findByPk(order.customerID);
+            console.log("user not found ", user);
+            console.log(user.isPremium);
+            user.isPremium = true;
+            await user.save();
+            return res.redirect("/dashboard");
+        }else{
+            res.status(400).json({ message: "Payment failed" });
+        }
+        
     
     }catch (error) {
         console.error("Error fetching order status:", error.message);
